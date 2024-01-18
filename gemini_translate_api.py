@@ -78,7 +78,7 @@ def api(API_KEY, content="", proprietary='',timeout=180, temperature=0.1, topK=1
     }
     #print(data)
     try :
-        response = requests.post(url, headers=headers, json=data, timeout=timeout, proxies=proxies)
+        response = requests.post(url, headers=headers, json=data, timeout=timeout)
     except Exception as e:
         return {'error':str(e)}
 
@@ -172,7 +172,7 @@ def gemini_api(API_KEY, content, strong_prompts, proprietary, timeout, temperatu
         'https': 'http://127.0.0.1:10809',
     }
     try:
-        response = requests.post(url, headers=headers, json=data, timeout=timeout, proxies=proxies)
+        response = requests.post(url, headers=headers, json=data, timeout=timeout)
     except Exception as e:
         return {'error': str(e)}
 
@@ -265,7 +265,7 @@ def memo_api(API_KEY, content, timeout=60):
         }
 
     try:
-        response = requests.post(url, headers=headers, json=data, timeout=timeout, proxies=proxies)
+        response = requests.post(url, headers=headers, json=data, timeout=timeout)
     except Exception as e:
         return {'error': str(e)}
 
@@ -273,11 +273,4 @@ def memo_api(API_KEY, content, timeout=60):
 
 
 
-
-
-
-
-if __name__ == "__main__" :
-    API_KEY = r"AIzaSyBCHMKT0_HU353YLFmxbB52nELYJcDor6s"
-    print(api(API_KEY=API_KEY, content="こにちは"))
 

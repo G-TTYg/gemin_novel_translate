@@ -14,7 +14,7 @@ def get_total_chapters(main_url):
         'http': 'http://127.0.0.1:10809',
         'https': 'http://127.0.0.1:10809',
     }
-    response = requests.get(main_url, headers=headers, proxies=proxies)
+    response = requests.get(main_url, headers=headers)
     response.encoding = "utf-8"
     html_content = response.text
     soup = BeautifulSoup(html_content, "html.parser")
@@ -94,7 +94,7 @@ def main(novel_dir):
         if len(glob.glob(f"./{novel_dir}/{str(index).zfill(3)}_*.txt")) > 0 :
             continue
 
-        response = requests.get(chapter_url, headers=headers, proxies=proxies)
+        response = requests.get(chapter_url, headers=headers)
         response.encoding = "utf-8"
         html_content = response.text
         soup = BeautifulSoup(html_content, "html.parser")
