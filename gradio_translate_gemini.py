@@ -5,6 +5,7 @@ import logging
 import gradio as gr
 from gemini_translate_api import gemini_api
 import get_ncode
+import get_kakuyomu
 import auto_translate_gemini
 from content_opt import content_opt
 from configparser import ConfigParser
@@ -52,10 +53,10 @@ def main_translate(api_key, content, strong_prompts, proprietary, timeout, tempe
 def auto_translate(novel_url,novel_id) :
     yield '已受理\n開始爬取...'
     if novel_url == 'ncode' :
-        ss = get_ncode.main(novel_id)
+        state = get_ncode.main(novel_id)
     elif novel_url == 'kakuyomu' :
-        ss = get_kakuyomu.main(novel_id)
-    if ss != 400 :
+        state = get_kakuyomu.main(novel_id)
+    if state != 400 :
         yield 'Error'
         return
     yield '開始翻譯...\n可以到已翻譯的小説查看'
@@ -110,12 +111,12 @@ with gr.Blocks() as web:
         gr.Markdown("注意，設置不做用於批量翻譯")
     with gr.Tab("批量翻譯") :
 
-        novel_url = gr.Dropdown(choices=['ncode'], label="選擇網站", value='ncode', interactive=True)
+        novel_url = gr.Dropdown(choices=['ncode','kakuyomu'], label="選擇網站", value='ncode', interactive=True)
         novel_id = gr.Textbox(label='小説id', placeholder='應該是英文數字組合', interactive=True)
-        gr.Markdown("只支持從ncode翻譯")
+        gr.Markdown("只支持從ncode和kakuyomu翻譯")
         gr.Markdown("選擇其一然後輸入小説id")
         gr.Markdown("如:")
-        #gr.Markdown("kakuyomu.jp/works/16817330650266014506 這個id就是 16817330650266014506")
+        gr.Markdown("kakuyomu.jp/works/16817330650266014506 這個id就是 16817330650266014506")
         gr.Markdown("ncode.syosetu.com/n7575gq 這個id為 n7575gq")
         batch_run = gr.Button("開始翻譯")
         gr.Markdown("批量小説翻譯會在伺服器上進行，並保存在伺服器上，任何人都可以查看")
@@ -131,7 +132,7 @@ with gr.Blocks() as web:
 
     #update
 
-    #novel_url.change(lambda x:gr.update(placeholder=show_rule[x]), novel_url, novel_id)
+    novel_url.change(lambda x:gr.update(placeholder=show_rule[x]), novel_url, novel_id)
 
     choose_novel.change(lambda :gr.update(choices=get_novel_list()), outputs=choose_novel, concurrency_limit=10)
     choose_cha.change(lambda id:gr.update(choices=os.listdir(f"./novel/{id}")), choose_novel, outputs=choose_cha, concurrency_limit=10)

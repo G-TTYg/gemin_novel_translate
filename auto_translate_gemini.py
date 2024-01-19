@@ -146,7 +146,7 @@ def main(novel_id, chapter_range_start = 1, chapter_range_end=999):
         cnt = 0
         while cnt<3:
             cnt += 1
-            novel_translated = gemini(API_KEY=API_KEY, proprietary=memo, timeout=180, temperature=0.1, topK=1, topP=0.1)
+            novel_translated = gemini(API_KEY=API_KEY, content=novel_content, proprietary=memo, timeout=180, temperature=0.1, topK=1, topP=0.1)
 
             error = novel_translated.get('error')
 
@@ -180,6 +180,6 @@ def main(novel_id, chapter_range_start = 1, chapter_range_end=999):
 
 if __name__ == '__main__' :
     #main('n0388ee',1)
-    main('n4744ia', 161)
-    #main('16817139556288291993')
+    #main('n4744ia', 161)
+    main('16817139556288291993',134)
     #add_memo('n7575gq', novel_content)

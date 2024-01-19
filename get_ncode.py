@@ -14,7 +14,7 @@ def get_total_chapters(main_url):
         'http': 'http://127.0.0.1:10809',
         'https': 'http://127.0.0.1:10809',
     }
-    response = requests.get(main_url, headers=headers)
+    response = requests.get(main_url, headers=headers, proxies=proxies)
     response.encoding = "utf-8"
     html_content = response.text
     soup = BeautifulSoup(html_content, "html.parser")
@@ -68,14 +68,14 @@ def check_directory(directory_name):
 def main(novel_dir):
     main_url = f"https://ncode.syosetu.com/{novel_dir}"
 
+    if total_chapters == 0 :
+        return 200
 
 
     check_directory(novel_dir)
     total_chapters = get_total_chapters(main_url)
 
-    if total_chapters == 0 :
-        os.rmdir(novel_dir)
-        return 200
+
 
     #print(f"该作品总共有 {total_chapters} 章。")
     
@@ -94,7 +94,7 @@ def main(novel_dir):
         if len(glob.glob(f"./{novel_dir}/{str(index).zfill(3)}_*.txt")) > 0 :
             continue
 
-        response = requests.get(chapter_url, headers=headers)
+        response = requests.get(chapter_url, headers=headers, proxies=proxies)
         response.encoding = "utf-8"
         html_content = response.text
         soup = BeautifulSoup(html_content, "html.parser")
@@ -120,7 +120,7 @@ def main(novel_dir):
         with open(filename, "w", encoding="utf-8") as file:
             file.write(chapter_title + "\n")
             for paragraph in chapter_content.find_all("p"):
-                file.write(paragraph.text.strip() + "\n")
+                file.write(paragraph.text + "\n")
 
         #print(f"文件已保存为：{filename}")
     return 400
