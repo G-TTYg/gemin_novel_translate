@@ -1,6 +1,7 @@
 import os
 import re
 import requests
+import json
 from bs4 import BeautifulSoup
 
 def is_valid_directory_name(directory_name):
@@ -39,25 +40,36 @@ def check_directory(directory_name):
         print(f"创建目录 {directory_name} 时出错: {error}")
 
 def get_chapter(main_url):
-    response = requests.get(main_url)
+    response = requests.get(f"https://kakuyomu.jp/works/{main_url}")
     response.encoding = "utf-8"
     html_content = response.text
     soup = BeautifulSoup(html_content, "html.parser")
     chapter_links = [a['href'] for a in soup.find_all("a", class_=re.compile("^WorkTocSection_link"))]
     if chapter_links == [] :
-        return 0
-    return chapter_links[0]
+        return 0, ''
+    title = soup.find('a', href=f"/works/{main_url}").text
+
+    return chapter_links[0], title
 
 
 def main(novel_dir):
-    main_url = f"https://kakuyomu.jp/works/{novel_dir}"
+    main_url = novel_dir
     #main_url = 'https://kakuyomu.jp/works/16817139556288291993/episodes/16817139556288389322'
-    link = get_chapter(main_url)
+    link, novel_title = get_chapter(main_url)
 
     if link == 0:
         return 200
 
     check_directory(novel_dir)
+
+    #print(novel_title)
+
+    with open("./title.json", 'r+',encoding="utf-8") as f :
+        titles = json.load(f)
+        titles[novel_dir] = novel_title
+        f.seek(0)
+        json.dump(titles, f, ensure_ascii=False)
+
 
     index = 0
     while True:

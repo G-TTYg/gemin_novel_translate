@@ -3,10 +3,11 @@ import re
 import requests
 import glob
 from bs4 import BeautifulSoup
+import json
 
 
 
-def get_total_chapters(main_url):
+def get_novel_data(main_url):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
     }
@@ -19,13 +20,11 @@ def get_total_chapters(main_url):
     html_content = response.text
     soup = BeautifulSoup(html_content, "html.parser")
     total_chapters = len(soup.find_all("dl", class_="novel_sublist2"))
-    return total_chapters
+    if total_chapters == 0 :
+        return 0, ''
+    novel_title = soup.find("p", class_="novel_title").text
+    return total_chapters, novel_title
 
-
-# def get_chapter_range():
-#     start_chapter = int(input("请输入开始章节号（包括）："))
-#     end_chapter = int(input("请输入结束章节号（包括）："))
-#     return (start_chapter, end_chapter)
 
 
 def is_valid_directory_name(directory_name):
@@ -68,13 +67,19 @@ def check_directory(directory_name):
 def main(novel_dir):
     main_url = f"https://ncode.syosetu.com/{novel_dir}"
 
+    total_chapters, novel_title = get_novel_data(main_url)
+
     if total_chapters == 0 :
         return 200
 
 
     check_directory(novel_dir)
-    total_chapters = get_total_chapters(main_url)
 
+    with open("./title.json", 'r+',encoding="utf-8") as f :
+        titles = json.load(f)
+        titles[novel_dir] = novel_title
+        f.seek(0)
+        json.dump(titles, f, ensure_ascii=False)
 
 
     #print(f"该作品总共有 {total_chapters} 章。")
@@ -126,4 +131,4 @@ def main(novel_dir):
     return 400
 
 if __name__ == '__main__':
-    main('n4744ia')
+    main('n2267be')
