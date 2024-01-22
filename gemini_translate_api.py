@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import requests
 
 def api(API_KEY, content="", is_translated="",proprietary='',timeout=180, temperature=0.1, topK=1, topP=0.1):

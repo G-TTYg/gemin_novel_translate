@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import logging
 import os
 import glob
@@ -179,7 +180,8 @@ def main(novel_id, chapter_range_start = 1, chapter_range_end=999):
 
 
 if __name__ == '__main__' :
+    import sys
     #main('n0388ee',1)
     #main('n4744ia', 161)
-    main('16817139556288291993',134)
+    main(sys.argv[1], sys.argv[2], sys.argv[3])
     #add_memo('n7575gq', novel_content)

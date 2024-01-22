@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import re
 import requests
@@ -131,4 +132,5 @@ def main(novel_dir):
     return 400
 
 if __name__ == '__main__':
-    main('n2267be')
+    import sys
+    main(sys.argv[1])
