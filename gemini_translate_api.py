@@ -277,7 +277,3 @@ def memo_api(API_KEY, content, timeout=60):
 
 
 
-if __name__ == "__main__" :
-    API_KEY = r"AIzaSyBCHMKT0_HU353YLFmxbB52nELYJcDor6s"
-    print(api(API_KEY=API_KEY, content="こにちは"))
-
