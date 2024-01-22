@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#coding:utf-8
+
 import logging
 import os
 import glob
@@ -47,7 +48,7 @@ def make_novel_dir(novel_id):
     else:
         os.makedirs(translated_novel_dir)
         print(f"目录 {translated_novel_dir} 创建成功")
-        open(f"./novel/{novel_id}_cn/memo.txt",'w', encoding="utf-8").write(head)
+        open(f"./novel/{novel_id}_cn/memo.txt", 'w', encoding="utf-8").write(head)
 
 def save_translated_novel(novel_id, chapter_range, novel_translated):
 
@@ -67,6 +68,31 @@ def save_translated_novel(novel_id, chapter_range, novel_translated):
         print(f"翻译后的小说已保存到：{translated_file_path}")
     else:
         raise FileNotFoundError("未找到指定前缀的原始文件。")
+
+def split_content(content, char_limit):
+    lines = content.split('\n')[::-1]  # reverse the lines
+    chunks = []
+
+    cur_line = 0
+    cur_length = 0
+    chunk = ""
+    while cur_line < len(lines):
+        if cur_length + len(lines[cur_line]) < char_limit:
+            chunk = lines[cur_line] + '\n' + chunk  # prepend the line
+            cur_length += len(lines[cur_line]) + 1
+            cur_line += 1
+        else:
+            chunks.append(chunk.strip())
+            chunk = ""
+            cur_length = 0
+            if len(lines[cur_line]) >= char_limit :
+                chunk += lines[cur_line][:char_limit-1]
+                lines[cur_line] = lines[cur_line][char_limit:]
+                print("too long...")
+    if chunk.strip():
+        chunks.append(chunk.strip())
+
+    return chunks[::-1]  # reverse the chunks
 
 def istranslated(novel_id, chapter_range):
     translated_novel_dir = f"./novel/{novel_id}_cn"
@@ -144,30 +170,43 @@ def main(novel_id, chapter_range_start = 1, chapter_range_end=999):
         memo = add_memo(novel_id, novel_content)
 
         inlog(f"开始翻译 {novel_id}_{chapter_range}")
-        cnt = 0
-        while cnt<3:
-            cnt += 1
-            novel_translated = gemini(API_KEY=API_KEY, content=novel_content, proprietary=memo, timeout=180, temperature=0.1, topK=1, topP=0.1)
+
+        novel_contents = split_content(novel_content, 5000)
+
+        novel_content = ''
+
+        fin_translated = ''
+
+        for split_ in novel_contents :
+
+            novel_content = novel_content + split_
+
+            novel_translated = gemini(API_KEY=API_KEY, content=novel_content, is_translated=fin_translated,proprietary=memo, timeout=180, temperature=0.1, topK=1, topP=0.1)
 
             error = novel_translated.get('error')
+
+            print(fin_translated)
 
             if error is not None:
                 if 'Read timed out' in str(novel_translated) :
                     inlog(f"未知錯誤:{novel_translated}")
+                    fin_translated = ''
                     break
-                inlog(f"發生錯誤，重新嘗試:{novel_translated}")
-                time.sleep(5)
+                inlog(f"發生錯誤:{novel_translated}")
             elif novel_translated.get('candidates') is not None:
                 novel_translated = novel_translated['candidates'][0]['content']['parts'][0]['text']
-                save_translated_novel(novel_id, chapter_range, novel_translated)
-                break
+                fin_translated = fin_translated + novel_translated + '\n\n'
             else:
                 if novel_translated == {'promptFeedback': {'blockReason': 'OTHER'}}:
                     inlog(f"被谷歌屏蔽:{novel_translated}")
+                    fin_translated = ''
                     break
                 inlog(f"未知情況:{novel_translated}")
+                fin_translated = ''
                 break
 
+        if len(fin_translated) > 10 :
+            save_translated_novel(novel_id, chapter_range, fin_translated)
 
         # 保存翻译好的小说
 
@@ -180,8 +219,7 @@ def main(novel_id, chapter_range_start = 1, chapter_range_end=999):
 
 
 if __name__ == '__main__' :
-    import sys
     #main('n0388ee',1)
-    #main('n4744ia', 161)
-    main(sys.argv[1], sys.argv[2], sys.argv[3])
+    main('n7533gt', 62)
+    #main('16817139556288291993',36)
     #add_memo('n7575gq', novel_content)
