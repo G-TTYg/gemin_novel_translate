@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import os
 import re
 import requests
@@ -85,7 +84,7 @@ def main(novel_dir):
 
     #print(f"该作品总共有 {total_chapters} 章。")
     
-    start_chapter, end_chapter = 1, total_chapters
+    start_chapter, end_chapter = 1, 10000
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
@@ -104,6 +103,10 @@ def main(novel_dir):
         response.encoding = "utf-8"
         html_content = response.text
         soup = BeautifulSoup(html_content, "html.parser")
+
+        nothing = soup.find("div", class_="nothing")
+        if nothing is not None :
+            break
 
         chapter_title = soup.find("p", class_='novel_subtitle').text.strip()
         chapter_content = soup.find("div", id='novel_honbun')
@@ -132,5 +135,4 @@ def main(novel_dir):
     return 400
 
 if __name__ == '__main__':
-    import sys
-    main(sys.argv[1])
+    main('n9246fl')
