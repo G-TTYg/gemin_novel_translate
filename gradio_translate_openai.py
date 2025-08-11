@@ -4,10 +4,10 @@
 import os
 import logging
 import gradio as gr
-from gemini_translate_api import gemini_api
+from openai_translate_api import openai_api
 import get_ncode
 import get_kakuyomu
-import auto_translate_gemini
+import auto_translate_openai
 from content_opt import content_opt
 from configparser import ConfigParser
 
@@ -36,19 +36,18 @@ def show_novel(id1,id2):
 
 
 
-def main_translate(api_key, content, strong_prompts, proprietary, timeout, temperature, topK, topP) :
+def main_translate(api_key, model, content, strong_prompts, proprietary, timeout, temperature, top_p) :
     if api_key == '' :
         api_key = API_KEY
     inlog(f"收到請求")
-    content = content_opt(content, 4)[:7005]
+    content = content_opt(content, 4)[:15000]
     inlog(content)
-    novel_translated = gemini_api(api_key, content, strong_prompts, proprietary, timeout, temperature, topK, topP)
-    if novel_translated.get('candidates') is not None :
-        inlog(novel_translated['candidates'][0]['content']['parts'][0]['text'])
-        return novel_translated['candidates'][0]['content']['parts'][0]['text']
-    elif novel_translated == {'promptFeedback': {'blockReason': 'OTHER'}} :
-        return "被谷歌屏蔽...請嘗試分段發送"
-    return str(novel_translated)
+    novel_translated = openai_api(api_key, content, model, strong_prompts, proprietary, timeout, temperature, top_p)
+    if isinstance(novel_translated, dict) and 'error' in novel_translated:
+        return str(novel_translated)
+    else:
+        inlog(novel_translated)
+        return novel_translated
 
 
 def auto_translate(novel_url,novel_id) :
@@ -62,7 +61,7 @@ def auto_translate(novel_url,novel_id) :
         return
     yield '開始翻譯...\n可以到已翻譯的小説查看'
 
-    auto_translate_gemini.main(novel_id)
+    auto_translate_openai.main(novel_id)
 
     return
 
@@ -84,21 +83,20 @@ show_rule = {'ncode':'應該是英文數字組合','kakuyomu':'應該是一連�
 with gr.Blocks() as web:
     with gr.Tab("翻譯日文"):
         #gr.Markdown("把小說粘貼進來，點擊開始翻譯即可", )
-        novel_content = gr.Textbox(label='日文原文', placeholder='把小説粘貼這...\n單次最長7000字，否則會自動切掉',lines=10)
-        gr.Markdown("使用谷歌gemini-pro進行翻譯")
+        novel_content = gr.Textbox(label='日文原文', placeholder='把小説粘貼這...\n單次最長15000字，否則會自動切掉',lines=10)
+        gr.Markdown("使用OpenAI API進行翻譯")
         gr.Markdown("翻譯5000字大約要一分鐘")
-        gr.Markdown("過於血腥暴力或未知原因的可能會被谷歌屏蔽")
         run_button = gr.Button("開始翻譯")
     with gr.Tab("翻译结果"):
         #output = gr.Markdown()
         output = gr.Textbox(label='譯文', placeholder='還沒有開始翻譯', show_copy_button=True, max_lines=9999, container=False)
     with gr.Tab("設置"):
         with gr.Row():
+            model = gr.Dropdown(choices=['gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo-preview'], label="選擇模型", value='gpt-3.5-turbo', interactive=True)
+        with gr.Row():
             temperature = gr.Slider(minimum=0.0, maximum=1.0, value=0.1, label='温度', step=0.05)
             top_p = gr.Slider(minimum=0.0, maximum=1.0, value=0.1, label='Top P', step=0.05)
-
         with gr.Row():
-            top_k = gr.Slider(minimum=1, maximum=32, value=1, label='Top K', step=1)
             timeout = gr.Slider(minimum=60, maximum=1000, value=120, label='超時時間', step=10)
 
         with gr.Row():
@@ -108,7 +106,7 @@ with gr.Blocks() as web:
             proprietary = gr.Textbox(label='特殊名詞及翻譯習慣',value=fyxg, placeholder='範例:\n日文:中文\n母さん：老媽\nうずまきナルト:漩渦鳴人',lines=5)
 
         with gr.Row():
-            gemini_api_key = gr.Textbox(label='API_KEY',value='', placeholder='留空使用公共api_key，或使用自己的API_KEY')
+            openai_api_key = gr.Textbox(label='API_KEY',value='', placeholder='留空使用公共api_key，或使用自己的API_KEY')
         gr.Markdown("注意，設置不做用於批量翻譯")
     with gr.Tab("批量翻譯") :
 
@@ -122,7 +120,6 @@ with gr.Blocks() as web:
         batch_run = gr.Button("開始翻譯")
         gr.Markdown("批量小説翻譯會在伺服器上進行，並保存在伺服器上，任何人都可以查看")
         gr.Markdown("可以在 已翻譯的小説 中查看已發送請求的小説")
-        gr.Markdown("注意，某些章節可能因爲某些原因被谷歌屏蔽無法翻譯，會自動跳過")
         batch_out = gr.Textbox(label="日志")
 
 
@@ -148,10 +145,9 @@ with gr.Blocks() as web:
 
     batch_run.click(auto_translate, [novel_url, novel_id], batch_out, concurrency_limit=10)
 
-    run_button.click(main_translate, [gemini_api_key, novel_content, strong_prompts, proprietary, timeout, temperature, top_k, top_p], output, concurrency_limit=10)
+    run_button.click(main_translate, [openai_api_key, model, novel_content, strong_prompts, proprietary, timeout, temperature, top_p], output, concurrency_limit=10)
 
 
-web.title = "使用Gemini來翻譯日輕小説"
+web.title = "使用OpenAI API來翻譯日輕小説"
 web.queue()
 web.launch(server_name=server_name, server_port=server_port, show_error=True, share=True)
-
